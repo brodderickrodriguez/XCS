@@ -4,7 +4,7 @@
 
 
 class ReinforcementProgram:
-    DEFAULT_MAX_STEPS = 10 ** 3
+    DEFAULT_MAX_STEPS = 10 ** 4
 
     def __init__(self, configuration=None):
         print('ReinforcementProgram initialized')

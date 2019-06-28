@@ -6,20 +6,20 @@ from xcs.environment import Environment
 import numpy as np
 
 
-class XOREnvironment(Environment):
+class MultiplexerEnvironment(Environment):
     def __init__(self):
         Environment.__init__(self)
-        print('initialized XOR environment')
+        print('initialized MUX environment')
 
         self.state = None
-        self.state_length = 0
+        self.state_length = 6
         self.step(None)
 
     def get_state(self):
         return self.state
 
     def step(self, action):
-        self.state = [int(round(np.random.uniform())) for _ in range(2)]
+        self.state = [int(round(np.random.uniform())) for _ in range(self.state_length)]
 
     def reset(self):
         self.step(None)
