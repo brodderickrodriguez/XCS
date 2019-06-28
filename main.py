@@ -18,5 +18,49 @@ def main():
     driver.run()
 
 
+def human_play_xor():
+    rp = XORReinforcementProgram()
+    env = XOREnvironment()
+    env.human_play(reinforcement_program=rp)
+
+
+def plot_xor_xcs():
+    from xcs import xcs_plot
+    from xcs.xcs import XCS
+
+    from xcs.example_scenarios.xor import xor_config
+
+    env = XOREnvironment()
+    rp = XORReinforcementProgram()
+
+    xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=xor_config)
+
+    xcs_object.run_experiment(repetitions=20, print_metrics=True)
+
+    xcs_plot.plot(xcs_object, title='XOR')
+
+
+def plot_six_multiplexer_xcs():
+    from xcs import xcs_plot
+    from xcs.xcs import XCS
+
+    from xcs.example_scenarios.multiplexer.multiplexer_environment import MultiplexerEnvironment
+    from xcs.example_scenarios.multiplexer.multiplexer_reinforcement_program import MultiplexerReinforcementProgram
+    from xcs.example_scenarios.multiplexer import multiplexer_config
+
+    env = MultiplexerEnvironment()
+    rp = MultiplexerReinforcementProgram()
+
+    xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=multiplexer_config)
+
+    xcs_object.run_experiment(repetitions=20, print_metrics=True)
+
+    xcs_plot.plot(xcs_object, title='6-Multiplexer')
+
+
 if __name__ == '__main__':
-    main()
+
+    # plot_xor_xcs()
+    plot_six_multiplexer_xcs()
+
+    # human_play_xor()

@@ -16,4 +16,4 @@ class XCSDriver:
     def run(self):
         env = self.environment_class()
         rp = self.reinforcement_program_class()
-        self.xcs_object = XCS(_env=env, _rp=rp)
+        # self.xcs_object = XCS(e=env, _rp=rp)
