@@ -17,20 +17,20 @@ class Classifier:
 
 		# condition that specifies the sensory situation
 		# which the classifier applies to
-		self.condition = [0 for _ in range(xcs_object.condition_length)]
+		self.condition = [0 for _ in range(xcs_object.config.condition_length)]
 
 		# action the classifier proposes
 		self.action = None
 
 		# (p) estimated payoff expected if the classifier matches and
 		# its action is committed
-		self.predicted_payoff = xcs_object.p_1
+		self.predicted_payoff = xcs_object.config.p_1
 
 		# (epsilon) the error made in the predictions
-		self.epsilon = xcs_object.epsilon_1
+		self.epsilon = xcs_object.config.epsilon_1
 
 		# (F) the classifiers fitness
-		self.fitness = xcs_object.F_1
+		self.fitness = xcs_object.config.F_1
 
 		# (exp) count for the number of times this classifier has
 		# belonged to the action_set

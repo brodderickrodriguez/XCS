@@ -10,26 +10,7 @@ from xcs.classifier import Classifier
 
 
 class XCS:
-    def __init__(self, environment, reinforcement_program, configuration=None):
-        # if there is no configuration specified
-        if configuration is None:
-            # get the basic default configuration
-            config_dict = self._basic_configuration_dict()
-        else:
-            # otherwise get the specified configuration
-            config_dict = configuration.__dict__
-
-        # for each key and default value in the basic config
-        for key, default_val in self._basic_configuration_dict().items():
-            # try to get this key value form the config dictionary
-            try:
-                self.__dict__[key] = config_dict[key]
-
-            # if the key does not exist (i.e. was not specified in
-            # the configuration), then grab its default value
-            except KeyError:
-                self.__dict__[key] = default_val
-
+    def __init__(self, environment, reinforcement_program, configuration):
         # all the classifiers that currently exist
         self.population = []
 
@@ -50,87 +31,12 @@ class XCS:
         # the reinforcement program object
         self.rp = reinforcement_program
 
+        # the current configuration for hyper params
+        self.config = configuration
+
         # dictionary containing all the seen rewards, expected rewards,
         # states, actions, and the number of microclassifiers
-        self.metrics_history = {'rhos': [],
-                                'predicted_rhos': [],
-                                'microclassifier_counts': []}
-
-    def _basic_configuration_dict(self):
-        basic_config_dict = {
-            # the length of the classifier's condition and the length
-            # of the environments state
-            'condition_length': 2,
-
-            # the actions which are possible in the environment
-            'possible_actions': [0, 1],
-
-            # the maximum size of the population (in micro-classifiers)
-            'N': 400,
-
-            # learning rate for payoff, epsilion, fitness, and action_set_size
-            'beta': np.random.uniform(0.1, 0.9),
-
-            # used to calculate the fitness of a classifier
-            'alpha': 0.1,
-            'epsilon_0': 0.01,
-            'v': 5,
-
-            # discount factor
-            'gamma': np.random.uniform(0.9, 0.99),
-
-            # the GA threshold. GA is applied in a set when the average time
-            # since the last GA in the set is greater than theta_ga
-            'theta_ga': np.random.uniform(25, 50),
-
-            # the probability of applying crossover in the GA
-            'chi': np.random.uniform(0.5, 1.0),
-
-            # specifies the probability of mutating an allele in the offspring
-            'mu': np.random.uniform(0.01, 0.05),
-
-            # deletion threshold. If the experience of a classifier is greater
-            # than theta_del, its fitness may be considered in its probability
-            # of deletion
-            'theta_del': 20,
-
-            # specifies the fraction of the mean fitness in population below which
-            # the fitness of a classifier may be considered in its probability
-            # of deletion
-            'delta': 0.1,
-
-            # subsumption threshold. experience of a classifier must be greater
-            # than theta_sub in order to be able to subsume another classifier
-            'theta_sub': 20,
-
-            # probability of using '#' (Classifier.WILDCARD_ATTRIBUTE_VALUE)
-            # in one attribute in the condition of a classifier when covering
-            'p_sharp': 0.33,
-
-            # used as initial values in new classifiers
-            'p_1': np.random.uniform(0, 10 ** -4),
-            'epsilon_1': np.random.uniform(0, 10 ** -4),
-            'F_1': np.random.uniform(0, 10 ** -4),
-
-            # probability during action selection of choosing the
-            # action uniform randomly
-            'p_explr': 0.0001,
-
-            # the minimum number of actions that must be present in match_set
-            # or else covering will occur
-            # "to cause covering to provide classifiers for every action, set
-            # equal to number of available actions"
-            'theta_mna': len([0, 1]),
-
-            # boolean parameter. specifies if offspring are to be tested
-            # for possible subsumption by parents
-            'do_ga_subsumption': True,
-
-            # boolean parameter. specifies if action sets are to be tested
-            # for subsuming classifiers
-            'do_action_set_subsumption': False}
-
-        return basic_config_dict
+        self.metrics_history = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
 
     def _update_metrics(self, rho, predicted_rho):
         # save the predicted payoff from committing this action
@@ -181,11 +87,11 @@ class XCS:
             # if previous_action_set is not empty
             if len(self.previous_action_set) > 0:
                 # compute deletion probability
-                P = previous_rho + self.gamma * max(predictions.keys())
+                payoff = previous_rho + self.config.gamma * max(predictions.keys())
 
                 # update previous_action_set by using
                 # P probability of deletion
-                self.update_set(A=self.previous_action_set, P=P)
+                self.update_set(_action_set=self.previous_action_set, payoff=payoff)
 
                 # run genetic algorithm on previous_action_set and
                 # previous_sigma inserting and possibly deleting in population
@@ -196,7 +102,7 @@ class XCS:
             if self.rp.end_of_program:
                 # update action_set by using
                 # P probability of deletion
-                self.update_set(A=self.action_set, P=rho)
+                self.update_set(_action_set=self.action_set, payoff=rho)
 
                 # run genetic algorithm on previous_action_set and
                 # previous_sigma inserting and possibly deleting in population
@@ -232,7 +138,7 @@ class XCS:
 
             # if the length of all unique actions is less than our
             # threshold, theta_mna, begin covering procedure
-            if len(all_found_actions) < self.theta_mna:
+            if len(all_found_actions) < self.config.theta_mna:
                 # create a new classifier, cl_c
                 # using the local match set and the current situation (sigma)
                 cl_c = self.generate_covering_classifier(_match_set, sigma)
@@ -254,10 +160,10 @@ class XCS:
         cl = Classifier(xcs_object=self)
 
         # for each attribute in cl's condition
-        for i in range(self.condition_length):
+        for i in range(self.config.condition_length):
             # if a random number is less than the probability of assigning
             # a wildcard '#'
-            if np.random.uniform() < self.p_sharp:
+            if np.random.uniform() < self.config.p_sharp:
                 # assign it to a wildcard '#'
                 cl.condition[i] = Classifier.WILDCARD_ATTRIBUTE_VALUE
             else:
@@ -270,7 +176,7 @@ class XCS:
         actions_found = set([cl.action for cl in _match_set])
 
         # subtract the possible actions from the actions found
-        difference_actions = set(self.possible_actions) - actions_found
+        difference_actions = set(self.config.possible_actions) - actions_found
 
         # if there are possible actions that are not in the actions_found
         if len(difference_actions) > 0:
@@ -282,11 +188,10 @@ class XCS:
             cl.action = list(difference_actions)[rand_idx]
         else:
             # find a random index in the possible actions
-            rand_idx = int(np.floor(np.random.uniform() *
-                                    len(self.possible_actions)))
+            rand_idx = int(np.floor(np.random.uniform() * len(self.config.possible_actions)))
 
             # set the action to the action corresponding to the random index
-            cl.action = self.possible_actions[rand_idx]
+            cl.action = self.config.possible_actions[rand_idx]
 
         # set the time step to the current time step
         cl.time_step = self.rp.time_step
@@ -303,49 +208,49 @@ class XCS:
 
     def generate_prediction_dictionary(self):
         # initialize the prediction dictionary
-        PA = {a: 0.0 for a in self.possible_actions}
+        pa = {a: 0.0 for a in self.config.possible_actions}
 
         # initialize the fitness sum dictionary
-        FSA = {a: 0.0 for a in self.possible_actions}
+        fsa = {a: 0.0 for a in self.config.possible_actions}
 
         # for each classifier in match_set
         for i in range(len(self.match_set)):
             # set a local variable
             cl = self.match_set[i]
 
-            # if the value in prediction dictonary for cl.action is None
-            if PA[cl.action] is None:
+            # if the value in prediction dictionary for cl.action is None
+            if pa[cl.action] is None:
                 # set it by accounting for fitness and predicted_payoff
-                PA[cl.action] = cl.predicted_payoff * cl.fitness
+                pa[cl.action] = cl.predicted_payoff * cl.fitness
             else:
                 # otherwise add to the action's weighted average
-                PA[cl.action] += cl.predicted_payoff * cl.fitness
+                pa[cl.action] += cl.predicted_payoff * cl.fitness
 
             # add to the action's fitness sum
-            FSA[cl.action] += cl.fitness
+            fsa[cl.action] += cl.fitness
 
-        # for each poissible action
-        for action in PA.keys():
+        # for each possible action
+        for action in pa.keys():
             # if the fitness sum of the action is not zero
-            if FSA[action] != 0:
+            if fsa[action] != 0:
                 # divide by the sum of the fitness for action across
                 # all classifiers
-                PA[action] /= FSA[action]
+                pa[action] /= fsa[action]
 
-        return PA
+        return pa
 
     def select_action(self, predictions):
-        # select action accoring to an epsilon-greedy policy
-        if np.random.uniform() < self.p_explr:
+        # select action according to an epsilon-greedy policy
+        if np.random.uniform() < self.config.p_explr:
             logging.debug('selecting random action...')
 
             # do pure exploration
             # find a random index in the list of self.possible_actions
             rand_idx = int(np.floor(np.random.uniform() *
-                                    len(self.possible_actions)))
+                                    len(self.config.possible_actions)))
 
             # then return the action that corresponds with that index
-            return self.possible_actions[rand_idx]
+            return self.config.possible_actions[rand_idx]
         else:
             # otherwise, return the best action to take
             best_action = max(predictions.items(), key=operator.itemgetter(1))
@@ -366,62 +271,59 @@ class XCS:
 
         return _action_set
 
-    def update_set(self, A, P):
+    def update_set(self, _action_set, payoff):
         # * equations found on page 12 of 'An Algorithmic Description of XCS' *
         # for each classifier in A
         # (either self.action_set or self.previous_action_set)
-        for cl in A:
+        for cl in _action_set:
             # update experience
             cl.experience += 1
 
             # if classifier experience is less than inverse of learning rate
             # used to determine update methods for predicted_payoff (p),
             # error (epsilon), and action_set_size (as)
-            cl_exp_under_threashold = cl.experience < (1 / self.beta)
+            cl_exp_under_threshold = cl.experience < (1 / self.config.beta)
 
             # the difference between the p-ty any predicted payoff
             # used to update payoff and error
-            payoff_difference = P - cl.predicted_payoff
+            payoff_difference = payoff - cl.predicted_payoff
 
             # the sum of the differences between each classifier's
             # numerosity and the action set size
             # used to update action set size
-            summed_difference = np.sum([c.numerosity - cl.action_set_size for c in A])
+            summed_difference = np.sum([c.numerosity - cl.action_set_size for c in _action_set])
 
             # update predicted_payoff (p)
-            if cl_exp_under_threashold:
+            if cl_exp_under_threshold:
                 cl.predicted_payoff += payoff_difference / cl.experience
             else:
-                cl.predicted_payoff += self.beta * payoff_difference
+                cl.predicted_payoff += self.config.beta * payoff_difference
 
             # update prediction error (epsilon)
-            if cl_exp_under_threashold:
+            if cl_exp_under_threshold:
                 cl.epsilon += (np.abs(payoff_difference) - cl.epsilon) / cl.experience
             else:
-                cl.epsilon += self.beta * (np.abs(payoff_difference) - cl.epsilon)
+                cl.epsilon += self.config.beta * (np.abs(payoff_difference) - cl.epsilon)
 
             # update action_set_size (as)
-            if cl_exp_under_threashold:
-                cl.action_set_size += summed_difference / cl.experience
+            if cl_exp_under_threshold:
+                try:
+                    cl.action_set_size += summed_difference / cl.experience
+                except RuntimeError:
+                    print('\n\n\n\nerror\n\n', summed_difference, cl.experience)
             else:
                 try:
-                    cl.action_set_size += self.beta * summed_difference
-                except:
-                    print(self.beta, summed_difference, type(summed_difference))
-                    f = open('./.debug1', 'w')
-                    s = str(cl.action_set_size) + '\n' + \
-                        str(self.beta) + '\n' + str(self.summed_difference) + \
-                        '\n' + str(type(summed_difference))
-                    f.write(s)
-                    f.close()
+                    cl.action_set_size += self.config.beta * summed_difference
+                except RuntimeError:
+                    print(self.config.beta, summed_difference, type(summed_difference))
 
         # update fitness for each classifier in A
-        self.update_fitness(A)
+        self.update_fitness(_action_set)
 
         # if the program is using action_set_subsumption then
         # call the procedure
-        if self.do_action_set_subsumption:
-            self.do_action_set_subsumption_procedure(A)
+        if self.config.do_action_set_subsumption:
+            self.do_action_set_subsumption_procedure(_action_set)
 
     def update_fitness(self, set_):
         # set a local variable to track the accuracy over the entire set_
@@ -432,13 +334,12 @@ class XCS:
 
         # for each classifier in set_
         for cl in set_:
-            # if classifier error is less than the error threashold
-            if cl.epsilon < self.epsilon_0:
+            # if classifier error is less than the error threshold
+            if cl.epsilon < self.config.epsilon_0:
                 # set the accuracy to 1 (100%)
                 k[cl] = 1
             else:
-                k[cl] = np.power((cl.epsilon / self.epsilon_0), -self.v) \
-                        * self.alpha
+                k[cl] = np.power((cl.epsilon / self.config.epsilon_0), -self.config.v) * self.config.alpha
 
             # update accuracy_sum using a weighted sum based on
             # classifier numerosity
@@ -446,31 +347,30 @@ class XCS:
 
         # for each classifier in set_
         for cl in set_:
-            cl.fitness += self.beta * \
-                          (((k[cl] * cl.numerosity) / accuracy_sum) - cl.fitness)
+            cl.fitness += self.config.beta * (((k[cl] * cl.numerosity) / accuracy_sum) - cl.fitness)
 
-    def run_ga(self, set_, sigma):
+    def run_ga(self, _action_set, sigma):
         # get average time since last GA
-        weighted_time = sum([cl.last_time_step * cl.numerosity for cl in set_])
+        weighted_time = sum([cl.last_time_step * cl.numerosity for cl in _action_set])
 
         # get the total number of micro-classifiers currently present in set_
-        num_micro_classifiers = sum([cl.numerosity for cl in set_])
+        num_micro_classifiers = sum([cl.numerosity for cl in _action_set])
 
         # compute the average time since last GA
         average_time = weighted_time / num_micro_classifiers
 
         # if the average time since last GA is less than the threshold
         # then do nothing
-        if self.rp.time_step - average_time <= self.theta_ga:
+        if self.rp.time_step - average_time <= self.config.theta_ga:
             return
 
         # update the time since last GA for all classifiers
-        for cl in set_:
+        for cl in _action_set:
             cl.last_time_step = self.rp.time_step
 
         # select two parents from the set_
-        parent1 = self.select_offspring(set_)
-        parent2 = self.select_offspring(set_)
+        parent1 = self.select_offspring(_action_set)
+        parent2 = self.select_offspring(_action_set)
 
         # copy each parent and create two new classifiers, child1 and child2
         child1 = parent1.copy()
@@ -485,7 +385,7 @@ class XCS:
         child2.experience = 0
 
         # if a random number is less than the threshold for applying crossover
-        if np.random.uniform() < self.chi:
+        if np.random.uniform() < self.config.chi:
             # apply crossover to child1 and child2
             self.apply_crossover(child1, child2)
 
@@ -522,7 +422,7 @@ class XCS:
             self.apply_mutation(child, sigma)
 
             # if subsumption is true
-            if self.do_ga_subsumption:
+            if self.config.do_ga_subsumption:
                 # check if parent1 subsumes child
                 if self.does_subsume(parent1, child):
                     # if it does, increment parent1 numerosity
@@ -590,10 +490,10 @@ class XCS:
 
     def apply_mutation(self, child, sigma):
         # for each index in the child's condition
-        for i in range(self.condition_length):
+        for i in range(self.config.condition_length):
             # if some random number is less than
             # the probability of mutating an allele in the offspring
-            if np.random.uniform() < self.mu:
+            if np.random.uniform() < self.config.mu:
                 # if the attribute at index i is already the wildcard
                 if child.condition[i] == Classifier.WILDCARD_ATTRIBUTE_VALUE:
                     # swap it with the i-th attribute in sigma
@@ -604,14 +504,12 @@ class XCS:
 
         # if some random number is less than
         # the probability of mutating an allele in the offspring
-        if np.random.uniform() < self.mu:
+        if np.random.uniform() < self.config.mu:
             # then generate a list of all the other possible actions
-            other_possible_actions = list(set(self.possible_actions) \
-                                          - set([child.action]))
+            other_possible_actions = list(set(self.config.possible_actions) - {child.action})
 
             # find some random index in that list
-            rand_idx = int(np.floor(np.random.uniform() * \
-                                    len(other_possible_actions)))
+            rand_idx = int(np.floor(np.random.uniform() * len(other_possible_actions)))
 
             # assign the action of this child to that random action
             child.action = other_possible_actions[rand_idx]
@@ -641,7 +539,7 @@ class XCS:
             return False
 
         # for each attribute index i in the classifiers condition
-        for i in range(self.condition_length):
+        for i in range(self.config.condition_length):
             # if the condition for cl_gen is not the wildcard
             # and cl_gen condition[i] does not match cl_spec condition[i]
             if cl_gen.condition[i] != Classifier.WILDCARD_ATTRIBUTE_VALUE and \
@@ -655,10 +553,10 @@ class XCS:
     def could_subsume(self, classifier):
         # if the classifier's experience is greater than
         # the subsumption threshold
-        if classifier.experience > self.theta_sub:
+        if classifier.experience > self.config.theta_sub:
             # and if the classifier's error (epsilon) is less than
             # the error threshold
-            if classifier.epsilon < self.epsilon_0:
+            if classifier.epsilon < self.config.epsilon_0:
                 # return true i.e. this classifier can subsume another
                 return True
 
@@ -683,13 +581,11 @@ class XCS:
                 # some random value is less than 0.5
                 if cl is None or \
                         c.count_wildcards() > cl_wildcard_count or \
-                        (cl_wildcard_count == c.count_wildcards() and \
-                         np.random.uniform() < 0.5):
+                        (cl_wildcard_count == c.count_wildcards() and np.random.uniform() < 0.5):
                     # then set cl to c
                     cl = c
 
-                    # update the cl_wildcard_count to equal the wildcard
-                    # cound in c
+                    # update the cl_wildcard_count to equal the wildcard count in c
                     cl_wildcard_count = c.count_wildcards()
 
         # if cl is not empty
@@ -698,7 +594,7 @@ class XCS:
             for c in set_:
                 # if cl is more general than c, then subsume it
                 if self.is_more_general(cl, c):
-                    # increlemtn cl's numberosity
+                    # increment cl's numerosity
                     cl.numerosity += c.numerosity
 
                     # remove c from the set_
@@ -715,7 +611,7 @@ class XCS:
         num_micro_classifiers = sum([cl.numerosity for cl in self.population])
 
         # if the number of classifiers is less than the max allowed
-        if num_micro_classifiers <= self.N:
+        if num_micro_classifiers <= self.config.N:
             # return i.e. do nothing
             return
 
@@ -769,8 +665,8 @@ class XCS:
         # if this classifier's experience > the deletion threshold
         # and fitness_per_numerosity < the fraction
         # of the mean fitness in population * the average fitness
-        if classifier.experience > self.theta_del and \
-                fitness_per_numerosity < (self.delta * avg_fitness_in_population):
+        if classifier.experience > self.config.theta_del and \
+                fitness_per_numerosity < (self.config.delta * avg_fitness_in_population):
             # set the vote to vote * average fitness / fitness_per_numerosity
             vote = (vote * avg_fitness_in_population) / fitness_per_numerosity
 
