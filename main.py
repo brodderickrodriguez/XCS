@@ -2,8 +2,6 @@
 # Auburn University - CSSE
 # June 28 2019
 
-from xcs.xcs_driver import XCSDriver
-
 import logging
 import sys
 
@@ -17,63 +15,56 @@ def human_play_xor():
     env.human_play(reinforcement_program=rp)
 
 
-def plot_xor_xcs():
-    from xcs import xcs_plot
+def xor():
+    from xcs.xcs_driver import XCSDriver
     from xcs.xcs import XCS
+    from xcs import xcs_plot
 
     from xcs.example_scenarios.xor.xor_environment import XOREnvironment
     from xcs.example_scenarios.xor.xor_reinforcement_program import XORReinforcementProgram
     from xcs.example_scenarios.xor.xor_configuration import XORConfiguration
 
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    driver = XCSDriver()
+    driver.repetitions = 10
+    driver.save_location = './xcs/example_scenarios/xor/data'
+    driver.experiment_name = 'test'
 
-    data = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
+    driver.xcs_class = XCS
+    driver.environment_class = XOREnvironment
+    driver.reinforcement_program_class = XORReinforcementProgram
+    driver.configuration_class = XORConfiguration
 
-    for _ in range(20):
-        logging.info('starting repetition...')
-        config = XORConfiguration()
-        env = XOREnvironment()
-        rp = XORReinforcementProgram(configuration=config)
-
-        xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=config)
-        xcs_object.run_experiment()
-
-        for key, val in xcs_object.metrics_history.items():
-            data[key].append(val)
+    data = driver.run()
 
     xcs_plot.plot2(data, title='XOR')
 
 
-def plot_six_multiplexer_xcs():
-    from xcs import xcs_plot
+def multiplexer():
+    from xcs.xcs_driver import XCSDriver
     from xcs.xcs import XCS
+    from xcs import xcs_plot
 
     from xcs.example_scenarios.multiplexer.multiplexer_environment import MultiplexerEnvironment
     from xcs.example_scenarios.multiplexer.multiplexer_reinforcement_program import MultiplexerReinforcementProgram
     from xcs.example_scenarios.multiplexer.multiplexer_configuration import MultiplexerConfiguration
 
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    driver = XCSDriver()
+    driver.repetitions = 10
+    driver.save_location = './xcs/example_scenarios/multiplexer/data'
+    driver.experiment_name = 'test'
 
-    data = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
+    driver.xcs_class = XCS
+    driver.environment_class = MultiplexerEnvironment
+    driver.reinforcement_program_class = MultiplexerReinforcementProgram
+    driver.configuration_class = MultiplexerConfiguration
 
-    for _ in range(20):
-        logging.info('starting repetition...')
-        config = MultiplexerConfiguration()
-        env = MultiplexerEnvironment()
-        rp = MultiplexerReinforcementProgram(configuration=config)
+    data = driver.run()
 
-        xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=config)
-        xcs_object.run_experiment()
-
-        for key, val in xcs_object.metrics_history.items():
-            data[key].append(val)
-
-    xcs_plot.plot2(data, title='6-Multiplexer')
+    xcs_plot.plot2(data, title='XOR')
 
 
 if __name__ == '__main__':
-
-    # plot_xor_xcs()
-    plot_six_multiplexer_xcs()
-
     # human_play_xor()
+
+    # xor()
+    multiplexer()

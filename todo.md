@@ -1,9 +1,9 @@
-* get project back to old commit using new project structure
 * use new method for saving experiment data
-* add multiprocessing
 * implement multi-step
+* get project back to old commit using new project structure
+* add multiprocessing
 * test!!
+
 * figure out why execution gets stuck
-* clean up project structure to python package style
-* clean up print statements 
+ 
 * add XCSR
