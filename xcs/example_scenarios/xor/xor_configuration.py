@@ -9,14 +9,7 @@ class XORConfiguration(Configuration):
     def __init__(self):
         Configuration.__init__(self)
 
-        self.max_steps_per_repetition = 15000
-
-        # the length of the classifier's condition and the length
-        # of the environments state
-        self.condition_length = 2
-
-        # the actions which are possible in the environment
-        self.possible_actions = [0, 1]
+        self.max_steps_per_repetition = 10000
 
         # the maximum size of the population (in micro-classifiers)
         self.N = 400
@@ -44,6 +37,8 @@ class XORConfiguration(Configuration):
         # probability during action selection of choosing the
         # action uniform randomly
         self.p_explr = 0.01
+
+        self.theta_mna = 2
 
         # boolean parameter. specifies if offspring are to be tested
         # for possible subsumption by parents

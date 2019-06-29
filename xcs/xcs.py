@@ -87,7 +87,7 @@ class XCS:
             # if previous_action_set is not empty
             if len(self.previous_action_set) > 0:
                 # compute deletion probability
-                payoff = previous_rho + self.config.gamma * max(predictions.keys())
+                payoff = previous_rho * self.config.gamma * max(predictions.keys())
 
                 # update previous_action_set by using
                 # P probability of deletion
@@ -160,7 +160,7 @@ class XCS:
         cl = Classifier(xcs_object=self)
 
         # for each attribute in cl's condition
-        for i in range(self.config.condition_length):
+        for i in range(self.env.state_length):
             # if a random number is less than the probability of assigning
             # a wildcard '#'
             if np.random.uniform() < self.config.p_sharp:
@@ -176,7 +176,7 @@ class XCS:
         actions_found = set([cl.action for cl in _match_set])
 
         # subtract the possible actions from the actions found
-        difference_actions = set(self.config.possible_actions) - actions_found
+        difference_actions = set(self.env.possible_actions) - actions_found
 
         # if there are possible actions that are not in the actions_found
         if len(difference_actions) > 0:
@@ -208,10 +208,10 @@ class XCS:
 
     def generate_prediction_dictionary(self):
         # initialize the prediction dictionary
-        pa = {a: 0.0 for a in self.config.possible_actions}
+        pa = {a: None for a in self.env.possible_actions}
 
         # initialize the fitness sum dictionary
-        fsa = {a: 0.0 for a in self.config.possible_actions}
+        fsa = {a: 0.0 for a in self.env.possible_actions}
 
         # for each classifier in match_set
         for i in range(len(self.match_set)):
@@ -244,16 +244,18 @@ class XCS:
         if np.random.uniform() < self.config.p_explr:
             logging.debug('selecting random action...')
 
-            # do pure exploration
-            # find a random index in the list of self.possible_actions
-            rand_idx = int(np.floor(np.random.uniform() *
-                                    len(self.config.possible_actions)))
+            # get all actions that have some predicted value
+            options = [key for key, val in predictions.items() if val is not None]
 
-            # then return the action that corresponds with that index
-            return self.config.possible_actions[rand_idx]
+            # do pure exploration
+            return np.random.choice(options)
+
         else:
+            # get all actions that have some predicted value
+            options = {key: val for key, val in predictions.items() if val is not None}
+
             # otherwise, return the best action to take
-            best_action = max(predictions.items(), key=operator.itemgetter(1))
+            best_action = max(options.items(), key=operator.itemgetter(1))
 
             # return the action corresponding to the highest weighted payoff
             return best_action[0]
@@ -443,7 +445,8 @@ class XCS:
             # selection for deletion
             self.delete_from_population()
 
-    def select_offspring(self, set_):
+    @staticmethod
+    def select_offspring(set_):
         # set a local variable to track the fitness over the entire set_
         fitness_sum = 0
 
@@ -468,7 +471,8 @@ class XCS:
             if fitness_sum > choice_point:
                 return cl
 
-    def apply_crossover(self, child1, child2):
+    @staticmethod
+    def apply_crossover(child1, child2):
         # set a local variable for some random index in which we
         # terminate the while loop
         x = np.random.uniform() * (len(child1.condition) + 1)
@@ -490,7 +494,7 @@ class XCS:
 
     def apply_mutation(self, child, sigma):
         # for each index in the child's condition
-        for i in range(self.config.condition_length):
+        for i in range(self.env.state_length):
             # if some random number is less than
             # the probability of mutating an allele in the offspring
             if np.random.uniform() < self.config.mu:
@@ -506,7 +510,7 @@ class XCS:
         # the probability of mutating an allele in the offspring
         if np.random.uniform() < self.config.mu:
             # then generate a list of all the other possible actions
-            other_possible_actions = list(set(self.config.possible_actions) - {child.action})
+            other_possible_actions = list(set(self.env.possible_actions) - {child.action})
 
             # find some random index in that list
             rand_idx = int(np.floor(np.random.uniform() * len(other_possible_actions)))
@@ -579,8 +583,7 @@ class XCS:
                 # than the number of wildcards in cl or the number of
                 # wildcards in c equals the number of wildcards in cl and
                 # some random value is less than 0.5
-                if cl is None or \
-                        c.count_wildcards() > cl_wildcard_count or \
+                if cl is None or c.count_wildcards() > cl_wildcard_count or \
                         (cl_wildcard_count == c.count_wildcards() and np.random.uniform() < 0.5):
                     # then set cl to c
                     cl = c

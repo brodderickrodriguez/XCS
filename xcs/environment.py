@@ -8,6 +8,7 @@ class Environment:
         print('environment initialized')
         self.state = None
         self.state_length = 0
+        self.possible_actions = []
 
     def get_state(self):
         raise NotImplementedError()

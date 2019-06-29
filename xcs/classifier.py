@@ -17,7 +17,7 @@ class Classifier:
 
 		# condition that specifies the sensory situation
 		# which the classifier applies to
-		self.condition = [0 for _ in range(xcs_object.config.condition_length)]
+		self.condition = [0 for _ in range(xcs_object.env.state_length)]
 
 		# action the classifier proposes
 		self.action = None

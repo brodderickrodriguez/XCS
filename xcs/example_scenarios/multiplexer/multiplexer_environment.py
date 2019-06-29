@@ -13,6 +13,7 @@ class MultiplexerEnvironment(Environment):
 
         self.state = None
         self.state_length = 6
+        self.possible_actions = [0, 1]
         self.step(None)
 
     def get_state(self):

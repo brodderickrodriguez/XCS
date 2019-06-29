@@ -12,7 +12,8 @@ class XOREnvironment(Environment):
         print('initialized XOR environment')
 
         self.state = None
-        self.state_length = 0
+        self.state_length = 2
+        self.possible_actions = [0, 1]
         self.step(None)
 
     def get_state(self):

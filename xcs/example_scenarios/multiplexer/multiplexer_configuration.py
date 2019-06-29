@@ -11,12 +11,12 @@ class MultiplexerConfiguration(Configuration):
 
         self.max_steps_per_repetition = 10 ** 4
 
-        # the length of the classifier's condition and the length
-        # of the environments state
-        self.condition_length = 6
-
-        # the actions which are possible in the environment
-        self.possible_actions = [0, 1]
+        # # the length of the classifier's condition and the length
+        # # of the environments state
+        # self.condition_length = 6
+        #
+        # # the actions which are possible in the environment
+        # self.possible_actions = [0, 1]
 
         # the maximum size of the population (in micro-classifiers)
         self.N = 400
@@ -73,7 +73,7 @@ class MultiplexerConfiguration(Configuration):
         # or else covering will occur
         # "to cause covering to provide classifiers for every action, set
         # equal to number of available actions"
-        self.theta_mna = len(self.possible_actions)
+        self.theta_mna = 2
 
         # boolean parameter. specifies if offspring are to be tested
         # for possible subsumption by parents
