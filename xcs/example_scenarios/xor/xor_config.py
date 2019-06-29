@@ -4,6 +4,8 @@
 
 import numpy as np
 
+max_steps_per_repetition = 10 ** 4
+
 
 # the length of the classifier's condition and the length
 # of the environments state

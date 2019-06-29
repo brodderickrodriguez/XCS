@@ -2,8 +2,8 @@
 # Auburn University - CSSE
 # June 18 2019
 
-import numpy as np
 
+max_steps_per_repetition = 10 ** 4
 
 # the length of the classifier's condition and the length
 # of the environments state
@@ -12,14 +12,10 @@ condition_length = 6
 # the actions which are possible in the environment
 possible_actions = [0, 1]
 
-# create an initial population of classifiers with 
-# random condition and action pairs
-generate_intial_random_classifiers = False
-
 # the maximum size of the population (in micro-classifiers)
 N = 400
 
-# learning rate for payoff, epsilion, fitness, and action_set_size
+# learning rate for payoff, epsilon, fitness, and action_set_size
 beta = 0.2
 
 # used to calculate the fitness of a classifier
@@ -28,7 +24,7 @@ epsilon_0 = 0.01
 v = 5
 
 # discount factor 
-gamma = 0.9
+gamma = 0.71
 
 # the GA threshold. GA is applied in a set when the average time
 # since the last GA in the set is greater than theta_ga
@@ -45,7 +41,7 @@ mu = 0.04
 # of deletion
 theta_del = 20
 
-# specifies the fration of the mean fitness in population below which 
+# specifies the fraction of the mean fitness in population below which
 # the fitness of a classifier may be considered in its probability 
 # of deletion
 delta = 0.1

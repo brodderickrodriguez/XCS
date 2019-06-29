@@ -67,3 +67,9 @@ class Classifier:
 	def count_wildcards(self):
 		count = sum([1 if x == Classifier.WILDCARD_ATTRIBUTE_VALUE else 0 for x in self.condition])
 		return count
+
+	def matches_sigma(self, sigma):
+		for ci, si in zip(self.condition, sigma):
+			if ci != Classifier.WILDCARD_ATTRIBUTE_VALUE and ci != si:
+				return False
+		return True

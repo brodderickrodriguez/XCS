@@ -4,21 +4,14 @@
 
 from xcs.xcs_driver import XCSDriver
 
-
-from xcs.example_scenarios.xor.xor_environment import XOREnvironment
-from xcs.example_scenarios.xor.xor_reinforcement_program import XORReinforcementProgram
-
-
-def main():
-    driver = XCSDriver()
-
-    driver.reinforcement_program_class = XOREnvironment
-    driver.environment_class = XORReinforcementProgram
-
-    driver.run()
+import logging
+import sys
 
 
 def human_play_xor():
+    from xcs.example_scenarios.xor.xor_environment import XOREnvironment
+    from xcs.example_scenarios.xor.xor_reinforcement_program import XORReinforcementProgram
+
     rp = XORReinforcementProgram()
     env = XOREnvironment()
     env.human_play(reinforcement_program=rp)
@@ -28,16 +21,26 @@ def plot_xor_xcs():
     from xcs import xcs_plot
     from xcs.xcs import XCS
 
+    from xcs.example_scenarios.xor.xor_environment import XOREnvironment
+    from xcs.example_scenarios.xor.xor_reinforcement_program import XORReinforcementProgram
     from xcs.example_scenarios.xor import xor_config
 
-    env = XOREnvironment()
-    rp = XORReinforcementProgram()
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=xor_config)
+    data = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
 
-    xcs_object.run_experiment(repetitions=20, print_metrics=True)
+    for _ in range(10):
+        logging.info('starting repetition...')
+        env = XOREnvironment()
+        rp = XORReinforcementProgram(configuration=xor_config)
 
-    xcs_plot.plot(xcs_object, title='XOR')
+        xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=xor_config)
+        xcs_object.run_experiment()
+
+        for key, val in xcs_object.metrics_history.items():
+            data[key].append(val)
+
+    xcs_plot.plot2(data, title='XOR')
 
 
 def plot_six_multiplexer_xcs():
@@ -48,19 +51,27 @@ def plot_six_multiplexer_xcs():
     from xcs.example_scenarios.multiplexer.multiplexer_reinforcement_program import MultiplexerReinforcementProgram
     from xcs.example_scenarios.multiplexer import multiplexer_config
 
-    env = MultiplexerEnvironment()
-    rp = MultiplexerReinforcementProgram()
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=multiplexer_config)
+    data = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
 
-    xcs_object.run_experiment(repetitions=20, print_metrics=True)
+    for _ in range(10):
+        logging.info('starting repetition...')
+        env = MultiplexerEnvironment()
+        rp = MultiplexerReinforcementProgram(configuration=multiplexer_config)
 
-    xcs_plot.plot(xcs_object, title='6-Multiplexer')
+        xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=multiplexer_config)
+        xcs_object.run_experiment()
+
+        for key, val in xcs_object.metrics_history.items():
+            data[key].append(val)
+
+    xcs_plot.plot2(data, title='6-Multiplexer')
 
 
 if __name__ == '__main__':
 
-    # plot_xor_xcs()
-    plot_six_multiplexer_xcs()
+    plot_xor_xcs()
+    # plot_six_multiplexer_xcs()
 
     # human_play_xor()

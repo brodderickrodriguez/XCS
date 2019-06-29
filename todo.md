@@ -4,6 +4,7 @@
 * add multiprocessing
 * implement multi-step
 * test!!
+* figure out why execution gets stuck
 * clean up project structure to python package style
 * clean up print statements 
 * add XCSR
