@@ -5,6 +5,8 @@
 import logging
 import sys
 
+from xcs import util
+
 
 def human_play_xor():
     from xcs.example_scenarios.xor.xor_environment import XOREnvironment
@@ -12,6 +14,15 @@ def human_play_xor():
 
     rp = XORReinforcementProgram()
     env = XOREnvironment()
+    env.human_play(reinforcement_program=rp)
+
+
+def human_play_woods2():
+    from xcs.example_scenarios.woods2.woods2_environment import Woods2Environment
+    from xcs.example_scenarios.woods2.woods2_reinforcement_program import Woods2ReinforcementProgram
+
+    rp = Woods2ReinforcementProgram()
+    env = Woods2Environment()
     env.human_play(reinforcement_program=rp)
 
 
@@ -27,7 +38,7 @@ def xor():
     driver = XCSDriver()
     driver.repetitions = 10
     driver.save_location = './xcs/example_scenarios/xor/data'
-    driver.experiment_name = 'test'
+    driver.experiment_name = 'test2'
 
     driver.xcs_class = XCS
     driver.environment_class = XOREnvironment
@@ -51,7 +62,7 @@ def multiplexer():
     driver = XCSDriver()
     driver.repetitions = 10
     driver.save_location = './xcs/example_scenarios/multiplexer/data'
-    driver.experiment_name = 'test'
+    driver.experiment_name = 'test2'
 
     driver.xcs_class = XCS
     driver.environment_class = MultiplexerEnvironment
@@ -60,11 +71,45 @@ def multiplexer():
 
     data = driver.run()
 
-    xcs_plot.plot2(data, title='XOR')
+    xcs_plot.plot2(data, title='MUX')
+
+
+def woods2():
+    from xcs.xcs_driver import XCSDriver
+    from xcs.xcs import XCS
+    from xcs import xcs_plot
+
+    from xcs.example_scenarios.woods2.woods2_environment import Woods2Environment
+    from xcs.example_scenarios.woods2.woods2_reinforcement_program import Woods2ReinforcementProgram
+    from xcs.example_scenarios.woods2.woods2_configuration import Woods2Configuration
+
+    driver = XCSDriver()
+    driver.repetitions = 10
+    driver.save_location = './xcs/example_scenarios/woods2/data'
+    driver.experiment_name = 'test'
+
+    driver.xcs_class = XCS
+    driver.environment_class = Woods2Environment
+    driver.reinforcement_program_class = Woods2ReinforcementProgram
+    driver.configuration_class = Woods2Configuration
+
+    data = driver.run()
+
+    xcs_plot.plot2(data, title='WOODS2')
 
 
 if __name__ == '__main__':
+    print('XCS')
     # human_play_xor()
+    # human_play_woods2()
 
     # xor()
-    multiplexer()
+    # multiplexer()
+    # woods2()
+
+    from xcs import util
+
+    dir_name = './xcs/example_scenarios/xor/data/test'
+    # util.load_results(dir_name)
+
+    util.plot_results(dir_name, title='XOR')

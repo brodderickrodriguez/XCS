@@ -78,4 +78,36 @@ class XCSDriver:
         for key, val in metrics.items():
             self.data[key].append(val)
 
+        # the path to where results are stored
+        path = self._root_data_directory + '/results/'
 
+        for key in metrics.keys():
+            # the filename where we will store this metric
+            filename = path + key + '/repetition' + str(repetition_num) + '.csv'
+
+            # if the metric does not have length, i.e. its a scalar
+            # then we handle it differently
+            if not hasattr(metrics[key][0], '__len__'):
+                data = np.array(metrics[key])
+            else:
+                # we can have n-D arrays of variable length
+                # here we find the array with the longest length
+                M = max([len(e) for e in metrics[key]])
+
+                # then we shape our data into and NxM matrix
+                data = np.zeros((len(metrics[key]), M))
+
+                # set all cells to nan
+                data[:] = np.nan
+
+                # iterate over each column of the metric
+                for i in range(len(metrics[key])):
+                    # iterate over each cell fo the metric
+                    for j in range(len(metrics[key][i])):
+                        # save that value to its corresponding cell in data
+                        data[i, j] = metrics[key][i][j]
+
+            # finally, save our NxM matrix
+            np.savetxt(filename, data, delimiter=',')
+
+        print('repetition {} done'.format(repetition_num))

@@ -87,7 +87,7 @@ class XCS:
             # if previous_action_set is not empty
             if len(self.previous_action_set) > 0:
                 # compute deletion probability
-                payoff = previous_rho * self.config.gamma * max(predictions.keys())
+                payoff = previous_rho + self.config.gamma * max(predictions.values())
 
                 # update previous_action_set by using
                 # P probability of deletion
