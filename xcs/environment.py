@@ -23,7 +23,7 @@ class Environment:
         raise NotImplementedError()
 
     def human_play(self, reinforcement_program):
-        while not reinforcement_program.end_of_program:
+        while not reinforcement_program.termination_criteria_met():
             self.print_world()
 
             state = self.get_state()
