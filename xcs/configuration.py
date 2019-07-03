@@ -7,15 +7,13 @@ import numpy as np
 
 class Configuration:
     def __init__(self):
-        # the maximum number of steps in each problem (repetition)
-        self.max_steps_per_repetition = 10 ** 4
 
-        # # the length of the classifier's condition and the length
-        # # of the environments state
-        # self.condition_length = 2
-        #
-        # # the actions which are possible in the environment
-        # self.possible_actions = [0, 1]
+        # the maximum number of steps in each problem (repetition)
+        self.episodes_per_repetition = 10 ** 4
+
+        self.steps_per_episode = 1
+
+        self.is_multi_step = False
 
         # the maximum size of the population (in micro-classifiers)
         self.N = 100

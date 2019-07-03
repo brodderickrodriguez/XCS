@@ -2,8 +2,5 @@
 * implement multi-step
 * get project back to old commit using new project structure
 * add multiprocessing
-* test!!
-
-* figure out why execution gets stuck
- 
+* test!! 
 * add XCSR

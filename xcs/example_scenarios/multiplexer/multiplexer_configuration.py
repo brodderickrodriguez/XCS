@@ -9,14 +9,12 @@ class MultiplexerConfiguration(Configuration):
     def __init__(self):
         Configuration.__init__(self)
 
-        self.max_steps_per_repetition = 10 ** 4
+        # the maximum number of
+        self.episodes_per_repetition = 1
 
-        # # the length of the classifier's condition and the length
-        # # of the environments state
-        # self.condition_length = 6
-        #
-        # # the actions which are possible in the environment
-        # self.possible_actions = [0, 1]
+        self.steps_per_episode = 10000
+
+        self.is_multi_step = False
 
         # the maximum size of the population (in micro-classifiers)
         self.N = 400
