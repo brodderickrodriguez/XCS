@@ -36,7 +36,11 @@ class XCS:
 
         # dictionary containing all the seen rewards, expected rewards,
         # states, actions, and the number of microclassifiers
-        self.metrics_history = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
+        self.metrics_history = {}
+        self.reset_metrics()
+
+    def reset_metrics(self):
+        self.metrics_history = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': [], 'steps': 0}
 
     def _update_metrics(self, rho, predicted_rho):
         # save the predicted payoff from committing this action
@@ -47,8 +51,10 @@ class XCS:
 
         # save the number of microclassifiers at this time step
         num_micro_classifiers = sum([cl.numerosity for cl in self.population])
-
         self.metrics_history['microclassifier_counts'].append(num_micro_classifiers)
+
+        # increment the number of steps
+        self.metrics_history['steps'] += 1
 
     def run_experiment(self):
         np.random.seed(int(time.time()))
@@ -86,11 +92,11 @@ class XCS:
 
             # if previous_action_set is not empty
             if len(self.previous_action_set) > 0:
-                # compute deletion probability
-                payoff = previous_rho + self.config.gamma * max(predictions.values())
+                # compute discounted payoff
+                non_null_actions = [v for v in predictions.values() if v is not None]
+                payoff = previous_rho + self.config.gamma * max(non_null_actions)
 
-                # update previous_action_set by using
-                # P probability of deletion
+                # update previous_action_set
                 self.update_set(_action_set=self.previous_action_set, payoff=payoff)
 
                 # run genetic algorithm on previous_action_set and
@@ -100,8 +106,7 @@ class XCS:
             # if experiment is over based on information from
             # reinforcement program
             if self.rp.end_of_program:
-                # update action_set by using
-                # P probability of deletion
+                # update action_set
                 self.update_set(_action_set=self.action_set, payoff=rho)
 
                 # run genetic algorithm on previous_action_set and
@@ -446,12 +451,12 @@ class XCS:
             self.delete_from_population()
 
     @staticmethod
-    def select_offspring(set_):
+    def select_offspring(_action_set):
         # set a local variable to track the fitness over the entire set_
         fitness_sum = 0
 
         # for each classifier in the set_
-        for cl in set_:
+        for cl in _action_set:
             # add its fitness to the fitness_sum
             fitness_sum += cl.fitness
 
@@ -462,7 +467,7 @@ class XCS:
         fitness_sum = 0
 
         # for each classifier in the set_
-        for cl in set_:
+        for cl in _action_set:
             # add its fitness to the fitness_sum
             fitness_sum += cl.fitness
 
