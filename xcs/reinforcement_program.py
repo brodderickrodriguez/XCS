@@ -13,13 +13,12 @@ class ReinforcementProgram:
         self.time_step = 0
 
         try:
-            self.max_steps = configuration.max_steps_per_repetition
+            self.max_steps = configuration.steps_per_episode
         except AttributeError:
             self.max_steps = ReinforcementProgram.DEFAULT_MAX_STEPS
 
     def step(self):
         self.time_step += 1
-        # self.end_of_program = self.time_step >= self.max_steps
 
     def determine_rho(self, sigma, action):
         raise NotImplementedError()
