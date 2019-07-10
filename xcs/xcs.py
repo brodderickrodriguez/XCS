@@ -317,7 +317,7 @@ class XCS:
                 try:
                     cl.action_set_size += summed_difference / cl.experience
                 except RuntimeError:
-                    print('\n\n\n\nerror\n\n', summed_difference, cl.experience)
+                    print(summed_difference, cl.experience)
             else:
                 try:
                     cl.action_set_size += self.config.beta * summed_difference
@@ -380,16 +380,13 @@ class XCS:
         parent2 = self.select_offspring(_action_set)
 
         # copy each parent and create two new classifiers, child1 and child2
-        child1 = parent1.copy()
-        child2 = parent2.copy()
+        child1, child2 = parent1.copy(), parent2.copy()
 
         # set their numerosity to 1
-        child1.numerosity = 1
-        child2.numerosity = 1
+        child1.numerosity = child2.numerosity = 1
 
         # set their experience to 0
-        child1.experience = 0
-        child2.experience = 0
+        child1.experience = child2.experience = 0
 
         # if a random number is less than the threshold for applying crossover
         if np.random.uniform() < self.config.chi:
