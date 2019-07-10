@@ -11,6 +11,7 @@ import multiprocessing
 import logging
 import os
 import time
+import json
 
 
 class XCSDriver:
@@ -89,32 +90,50 @@ class XCSDriver:
         metadata['name'] = self.experiment_name
         metadata['root_dir'] = self._root_data_directory
         metadata['start_time'] = time_now
-        f.write(str(metadata))
-        f.close()
+        json.dump(metadata, f)
 
     def _run_processes(self):
-        queue = multiprocessing.Queue()
-        processes = []
-
         if self.configuration_class().is_multi_step:
-            run_func = self._run_multi_step_repetition
+            processes = []
+
+            for process in range(self.repetitions):
+                process = multiprocessing.Process(target=self._run_multi_step_repetition, args=(process,))
+                processes.append(process)
+                process.start()
+
+            print('queued all processes')
+
+            for process in range(min(self.repetitions, len(processes))):
+                processes[process].join()
+                print('joined process', process)
         else:
-            run_func = self._run_single_step_repetition
+            for process in range(self.repetitions):
+                self._run_single_step_repetition(process)
 
-        for process in range(self.repetitions):
-            process = multiprocessing.Process(target=run_func, args=(queue, process))
-            processes.append(process)
-            process.start()
+    # def _run_processes(self):
+    #     processes = []
+    #
+    #     if self.configuration_class().is_multi_step:
+    #         run_func = self._run_multi_step_repetition
+    #     else:
+    #         run_func = self._run_single_step_repetition
+    #
+    #     for process in range(self.repetitions):
+    #         # run_func(process)
+    #         # continue
+    #         process = multiprocessing.Process(target=run_func, args=(process,))
+    #         processes.append(process)
+    #         process.start()
+    #
+    #     print('queued all processes')
+    #
+    #     for process in range(min(self.repetitions, len(processes))):
+    #         processes[process].join()
+    #         print('joined process', process)
+    #
+    #     print('joined all processes')
 
-        print('queued all processes')
-
-        for process in range(self.repetitions):
-            processes[process].join()
-            print('joined process', process)
-
-        print('joined all processes')
-
-    def _run_single_step_repetition(self, queue, repetition_num):
+    def _run_single_step_repetition(self, repetition_num):
         print('repetition {} started'.format(repetition_num))
 
         config = self.configuration_class()
@@ -124,7 +143,7 @@ class XCSDriver:
         xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=config)
         xcs_object.run_experiment()
 
-        self._save_repetition_single_step(xcs_object.metrics_history, repetition_num)
+        self._save_repetition(xcs_object.metrics_history, repetition_num)
 
     @staticmethod
     def _post_process_episode(config, episode_metrics):
@@ -138,7 +157,7 @@ class XCSDriver:
 
         return _dict
 
-    def _run_multi_step_repetition(self, queue, repetition_num):
+    def _run_multi_step_repetition(self, repetition_num):
         print('repetition {} started'.format(repetition_num))
         config = self.configuration_class()
         env = self.environment_class()
@@ -177,21 +196,8 @@ class XCSDriver:
             # the filename where we will store this metric
             filename = path + key + '/repetition' + str(repetition_num) + '.csv'
 
-            data = np.array(metrics[key])
-            np.savetxt(filename, data, delimiter=',')
-
-        print('repetition {} done'.format(repetition_num))
-
-    def _save_repetition_single_step(self, metrics, repetition_num):
-        # the path to where results are stored
-        path = self._root_data_directory + '/results/'
-
-        for key in metrics.keys():
-            # the filename where we will store this metric
-            filename = path + key + '/repetition' + str(repetition_num) + '.csv'
-
-            if key == 'steps':
-                continue
+            if type(metrics[key]) is int:
+                metrics[key] = [metrics[key]]
 
             data = np.array(metrics[key])
             np.savetxt(filename, data, delimiter=',')
