@@ -71,7 +71,6 @@ def _is_multi_step_environment(experiment_path):
 
 def plot_results(experiment_path, interval=50, title=''):
     if _is_multi_step_environment(experiment_path):
-        print('is multi')
         data, labels = _get_data_multi_step(experiment_path)
     else:
         data, labels = _get_data_single_step(experiment_path)
