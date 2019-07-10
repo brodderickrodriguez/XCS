@@ -4,12 +4,14 @@
 
 from xcs.environment import Environment
 import numpy as np
+import logging
 
 
 class Woods2Environment(Environment):
     def __init__(self):
         Environment.__init__(self)
-        print('initialized WOODS2 environment')
+        logging.info('WOODS2 environment initialized')
+
         self.state_length = 8 * 3
         self.possible_actions = [i for i in range(8)]
         self.world = None

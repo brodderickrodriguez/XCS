@@ -2,12 +2,14 @@
 # Auburn University - CSSE
 # June 28 2019
 
+import logging
+
 
 class ReinforcementProgram:
     DEFAULT_MAX_STEPS = 10 ** 4
 
     def __init__(self, configuration=None):
-        print('ReinforcementProgram initialized')
+        logging.info('ReinforcementProgram initialized')
 
         self.end_of_program = False
         self.time_step = 0

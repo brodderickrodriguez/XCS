@@ -4,12 +4,13 @@
 
 from xcs.environment import Environment
 import numpy as np
+import logging
 
 
 class XOREnvironment(Environment):
     def __init__(self):
         Environment.__init__(self)
-        print('initialized XOR environment')
+        logging.info('XOR environment initialized')
 
         self.state = None
         self.state_length = 2

@@ -3,12 +3,13 @@
 # June 28 2019
 
 from xcs.reinforcement_program import ReinforcementProgram
+import logging
 
 
 class XORReinforcementProgram(ReinforcementProgram):
     def __init__(self, configuration=None):
         ReinforcementProgram.__init__(self, configuration)
-        print('initialized XOR reinforcement program')
+        logging.info('XOR ReinforcementProgram initialized')
 
     def determine_rho(self, sigma, action):
         self.step()

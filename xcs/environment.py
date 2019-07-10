@@ -2,10 +2,13 @@
 # Auburn University - CSSE
 # June 28 2019
 
+import logging
+
 
 class Environment:
     def __init__(self):
-        print('environment initialized')
+        logging.info('environment initialized')
+
         self.state = None
         self.state_length = 0
         self.possible_actions = []

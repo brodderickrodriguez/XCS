@@ -4,12 +4,13 @@
 
 from xcs.reinforcement_program import ReinforcementProgram
 import numpy as np
+import logging
 
 
 class Woods2ReinforcementProgram(ReinforcementProgram):
     def __init__(self, configuration=None):
         ReinforcementProgram.__init__(self, configuration)
-        print('initialized WOODS2 reinforcement program')
+        logging.info('WOODS2 ReinforcementProgram initialized')
 
     def _aciton_map(self):
         return {7:(-1, -1), 0: (-1, 0), 1: (-1, +1),

@@ -4,12 +4,13 @@
 
 from xcs.environment import Environment
 import numpy as np
+import logging
 
 
 class MultiplexerEnvironment(Environment):
     def __init__(self):
         Environment.__init__(self)
-        print('initialized MUX environment')
+        logging.info('MUX environment initialized')
 
         self.state = None
         self.state_length = 6

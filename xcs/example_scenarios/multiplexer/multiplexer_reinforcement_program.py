@@ -3,12 +3,13 @@
 # June 28 2019
 
 from xcs.reinforcement_program import ReinforcementProgram
+import logging
 
 
 class MultiplexerReinforcementProgram(ReinforcementProgram):
     def __init__(self, configuration=None):
         ReinforcementProgram.__init__(self, configuration)
-        print('initialized MUX reinforcement program')
+        logging.info('MUX ReinforcementProgram initialized')
 
     def determine_rho(self, sigma, action):
         self.step()
