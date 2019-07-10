@@ -23,7 +23,7 @@ class Woods2Configuration(Configuration):
         self.p_sharp = 0.5
 
         # learning rate for payoff, epsilon, fitness, and action_set_size
-        self.beta = 0.2
+        self.beta = 0.1
 
         # used to calculate the fitness of a classifier
         self.alpha = 0.1
