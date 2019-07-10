@@ -3,6 +3,8 @@
 # June 28 2019
 
 from xcs.xcs import XCS
+from xcs.environment import Environment
+from xcs.reinforcement_program import ReinforcementProgram
 
 import numpy as np
 import multiprocessing
@@ -13,21 +15,16 @@ import time
 
 class XCSDriver:
     def __init__(self):
-        print('driver initialized')
+        logging.info('XCS Driver initialized')
 
         self.xcs_class = None
         self.reinforcement_program_class = None
         self.environment_class = None
         self.configuration_class = None
-
         self.repetitions = 10
-
         self.save_location = './'
         self.experiment_name = None
-
         self._root_data_directory = None
-
-        self.data = {'rhos': [], 'predicted_rhos': [], 'microclassifier_counts': []}
 
     def run(self):
         logging.info('Running XCSDriver')
@@ -36,35 +33,90 @@ class XCSDriver:
         logging.info('XCSDriver passed argument check')
 
         self._setup_directories()
-        logging.info('XCSDriver created directory: {}' \
-                     .format(self._root_data_directory))
+        logging.info('XCSDriver created directory: {}'.format(self._root_data_directory))
 
         self._run_processes()
         logging.info('XCSDriver ran all processes')
 
-        return self.data
-
     def _check_arguments(self):
-        pass
+        # check if the number of repetitions is at least 1
+        if self.repetitions < 1:
+            raise ValueError('repetitions cannot be less than 1')
+
+        # check if user has passed an xcs class
+        if self.xcs_class is None:
+            raise ValueError('xcs_class must be specified before running \
+                    and it must be a class not an instance of a class')
+
+        # check if user passed a class and not a class instance
+        if isinstance(self.xcs_class, XCS):
+            raise ValueError('xcs_class cannot be an instance')
+
+        # check if user passed an environment class
+        if self.environment_class is None:
+            raise ValueError('environment_class must be specified before \
+                    running and it must be a class not an instance of a class')
+
+        # check if user passed a class and not a class instance
+        if isinstance(self.environment_class, Environment):
+            raise ValueError('environment_class cannot be an instance')
+
+        # check if a user passed a reinforcement_program class
+        if self.reinforcement_program_class is None:
+            raise ValueError('reinforcement_program_class must be specified \
+                    before running and it must be a class not an instance of a class')
+
+        # check if user passed a class and not a class instance
+        if isinstance(self.reinforcement_program_class, ReinforcementProgram):
+            raise ValueError('reinforcement_program_class cannot be an instance')
 
     def _setup_directories(self):
-        self.experiment_name = self.experiment_name or str(int(time.time()))
+        time_now = str(int(time.time()))
+        self.experiment_name = self.experiment_name or time_now
 
         self._root_data_directory = self.save_location + '/' + self.experiment_name
 
-        print(os.path.abspath('./'))
-
         directories = ['', '/classifiers', '/results', '/results/rhos', '/results/predicted_rhos',
-                       '/results/microclassifier_counts']
+                       '/results/microclassifier_counts', '/results/steps']
 
         for directory in directories:
             os.mkdir(self._root_data_directory + directory)
 
-    def _run_processes(self):
-        for i in range(20):
-            self._run_repetition(i)
+        metadata_file = self._root_data_directory + '/metadata.json'
+        f = open(metadata_file, 'w')
+        metadata = {key: val for key, val in self.configuration_class().__dict__.items()}
+        metadata['repetitions'] = self.repetitions
+        metadata['name'] = self.experiment_name
+        metadata['root_dir'] = self._root_data_directory
+        metadata['start_time'] = time_now
+        f.write(str(metadata))
+        f.close()
 
-    def _run_repetition(self, repetition_num):
+    def _run_processes(self):
+        queue = multiprocessing.Queue()
+        processes = []
+
+        if self.configuration_class().is_multi_step:
+            run_func = self._run_multi_step_repetition
+        else:
+            run_func = self._run_single_step_repetition
+
+        for process in range(self.repetitions):
+            process = multiprocessing.Process(target=run_func, args=(queue, process))
+            processes.append(process)
+            process.start()
+
+        print('queued all processes')
+
+        for process in range(self.repetitions):
+            processes[process].join()
+            print('joined process', process)
+
+        print('joined all processes')
+
+    def _run_single_step_repetition(self, queue, repetition_num):
+        print('repetition {} started'.format(repetition_num))
+
         config = self.configuration_class()
         env = self.environment_class()
         rp = self.reinforcement_program_class(configuration=config)
@@ -72,12 +124,52 @@ class XCSDriver:
         xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=config)
         xcs_object.run_experiment()
 
-        self._save_repetition(xcs_object.metrics_history, repetition_num)
+        self._save_repetition_single_step(xcs_object.metrics_history, repetition_num)
+
+    @staticmethod
+    def _post_process_episode(config, episode_metrics):
+        _dict = {}
+
+        for key, value in episode_metrics.items():
+            new_val = np.array(value).astype(float)
+            length = len(value) if hasattr(value, '__len__') else 1
+            new_val = np.pad(new_val, [(0, config.steps_per_episode - length)], mode='constant', constant_values=np.nan)
+            _dict[key] = new_val
+
+        return _dict
+
+    def _run_multi_step_repetition(self, queue, repetition_num):
+        print('repetition {} started'.format(repetition_num))
+        config = self.configuration_class()
+        env = self.environment_class()
+        rp = self.reinforcement_program_class(configuration=config)
+        metrics, i = [], 0
+
+        xcs_object = XCS(environment=env, reinforcement_program=rp, configuration=config)
+
+        while i < config.episodes_per_repetition:
+            env.reset()
+            rp.reset()
+            xcs_object.reset_metrics()
+
+            config.p_explr = 0 if np.random.uniform() < 0.5 else 1
+
+            xcs_object.run_experiment()
+
+            if config.p_explr == 0:
+                i += 1
+                d = self._post_process_episode(config, xcs_object.metrics_history)
+                metrics.append(d)
+
+        metrics_compiled = {key: [] for key in metrics[0].keys()}
+
+        for data in metrics:
+            for key, value in data.items():
+                metrics_compiled[key].append(value)
+
+        self._save_repetition(metrics_compiled, repetition_num)
 
     def _save_repetition(self, metrics, repetition_num):
-        for key, val in metrics.items():
-            self.data[key].append(val)
-
         # the path to where results are stored
         path = self._root_data_directory + '/results/'
 
@@ -85,29 +177,23 @@ class XCSDriver:
             # the filename where we will store this metric
             filename = path + key + '/repetition' + str(repetition_num) + '.csv'
 
-            # if the metric does not have length, i.e. its a scalar
-            # then we handle it differently
-            if not hasattr(metrics[key][0], '__len__'):
-                data = np.array(metrics[key])
-            else:
-                # we can have n-D arrays of variable length
-                # here we find the array with the longest length
-                M = max([len(e) for e in metrics[key]])
+            data = np.array(metrics[key])
+            np.savetxt(filename, data, delimiter=',')
 
-                # then we shape our data into and NxM matrix
-                data = np.zeros((len(metrics[key]), M))
+        print('repetition {} done'.format(repetition_num))
 
-                # set all cells to nan
-                data[:] = np.nan
+    def _save_repetition_single_step(self, metrics, repetition_num):
+        # the path to where results are stored
+        path = self._root_data_directory + '/results/'
 
-                # iterate over each column of the metric
-                for i in range(len(metrics[key])):
-                    # iterate over each cell fo the metric
-                    for j in range(len(metrics[key][i])):
-                        # save that value to its corresponding cell in data
-                        data[i, j] = metrics[key][i][j]
+        for key in metrics.keys():
+            # the filename where we will store this metric
+            filename = path + key + '/repetition' + str(repetition_num) + '.csv'
 
-            # finally, save our NxM matrix
+            if key == 'steps':
+                continue
+
+            data = np.array(metrics[key])
             np.savetxt(filename, data, delimiter=',')
 
         print('repetition {} done'.format(repetition_num))
