@@ -78,9 +78,9 @@ def woods2():
     from xcs.example_scenarios.woods2.woods2_configuration import Woods2Configuration
 
     driver = XCSDriver()
-    driver.repetitions = 10
+    driver.repetitions = 30
     driver.save_location = './xcs/example_scenarios/woods2/data'
-    driver.experiment_name = 'test1'
+    driver.experiment_name = 'test5_negative_rho'
 
     driver.xcs_class = XCS
     driver.environment_class = Woods2Environment
@@ -95,12 +95,12 @@ if __name__ == '__main__':
     # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     # human_play_xor()
-    # human_play_woods2()
-    human_play_multiplexer()
+    human_play_woods2()
+    # human_play_multiplexer()
 
     # xor()
     # multiplexer()
-    # woods2()
+    woods2()
 
-    dir_name = './xcs/example_scenarios/woods2/data/test1'
-    util.plot_results(dir_name, title='W2', interval=50)
+    dir_name = './xcs/example_scenarios/woods2/data/test5_negative_rho'
+    util.plot_results(dir_name, title='W2', interval=100)

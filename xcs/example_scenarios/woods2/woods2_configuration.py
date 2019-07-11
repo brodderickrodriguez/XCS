@@ -10,7 +10,7 @@ class Woods2Configuration(Configuration):
         Configuration.__init__(self)
 
         # the maximum number of
-        self.episodes_per_repetition = 4000
+        self.episodes_per_repetition = 8000
 
         self.steps_per_episode = 100
 
