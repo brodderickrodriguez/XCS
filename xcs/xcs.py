@@ -490,7 +490,7 @@ class XCS:
 
         for i in range(int(y)):
             # while we are within the random bounds specified by x and y
-            if x <= i and i < y:
+            if x <= i < y:
                 # swap the i-th condition in child1's and child2's condition
                 child1.condition[i], child2.condition[i] = child2.condition[i], child1.condition[i]
 
