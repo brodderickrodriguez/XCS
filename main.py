@@ -18,6 +18,15 @@ def human_play_xor():
     env.human_play(reinforcement_program=rp)
 
 
+def human_play_multiplexer():
+    from xcs.example_scenarios.multiplexer.multiplexer_environment import MultiplexerEnvironment
+    from xcs.example_scenarios.multiplexer.multiplexer_reinforcement_program import MultiplexerReinforcementProgram
+
+    rp = MultiplexerReinforcementProgram()
+    env = MultiplexerEnvironment()
+    env.human_play(reinforcement_program=rp)
+
+
 def human_play_woods2():
     from xcs.example_scenarios.woods2.woods2_environment import Woods2Environment
     from xcs.example_scenarios.woods2.woods2_reinforcement_program import Woods2ReinforcementProgram
@@ -87,10 +96,11 @@ if __name__ == '__main__':
 
     # human_play_xor()
     # human_play_woods2()
+    human_play_multiplexer()
 
     # xor()
     # multiplexer()
-    woods2()
+    # woods2()
 
     dir_name = './xcs/example_scenarios/woods2/data/test1'
     util.plot_results(dir_name, title='W2', interval=50)

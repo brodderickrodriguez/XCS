@@ -15,12 +15,13 @@ class MultiplexerReinforcementProgram(ReinforcementProgram):
         self.step()
         self.end_of_program = True
 
-        _a = (not sigma[0]) & (not sigma[1]) & sigma[2]
-        _b = (not sigma[0]) & sigma[1] & sigma[3]
-        _c = sigma[0] & (not sigma[1]) & sigma[4]
-        _d = sigma[0] & sigma[1] & sigma[5]
+        address_bits = ''.join(str(x) for x in sigma[:2])
+        index_bit = int(address_bits, 2)
+        data_bit_index = index_bit + len(address_bits)
+        data_bit = sigma[data_bit_index]
 
-        rho = int((_a or _b or _c or _d) == action)
+        rho = int(data_bit == action)
+
         return rho
 
     def termination_criteria_met(self):
