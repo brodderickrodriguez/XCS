@@ -84,12 +84,12 @@ class XCSDriver:
             os.mkdir(self._root_data_directory + directory)
 
         metadata_file = self._root_data_directory + '/metadata.json'
-        f = open(metadata_file, 'w')
         metadata = {key: val for key, val in self.configuration_class().__dict__.items()}
         metadata['repetitions'] = self.repetitions
         metadata['name'] = self.experiment_name
         metadata['root_dir'] = self._root_data_directory
         metadata['start_time'] = time_now
+        f = open(metadata_file, 'w')
         json.dump(metadata, f)
 
     def _run_processes(self):
@@ -109,29 +109,6 @@ class XCSDriver:
         else:
             for process in range(self.repetitions):
                 self._run_single_step_repetition(process)
-
-    # def _run_processes(self):
-    #     processes = []
-    #
-    #     if self.configuration_class().is_multi_step:
-    #         run_func = self._run_multi_step_repetition
-    #     else:
-    #         run_func = self._run_single_step_repetition
-    #
-    #     for process in range(self.repetitions):
-    #         # run_func(process)
-    #         # continue
-    #         process = multiprocessing.Process(target=run_func, args=(process,))
-    #         processes.append(process)
-    #         process.start()
-    #
-    #     print('queued all processes')
-    #
-    #     for process in range(min(self.repetitions, len(processes))):
-    #         processes[process].join()
-    #         print('joined process', process)
-    #
-    #     print('joined all processes')
 
     def _run_single_step_repetition(self, repetition_num):
         print('repetition {} started'.format(repetition_num))
