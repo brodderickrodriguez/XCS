@@ -5,7 +5,6 @@
 
 class Classifier:
 	WILDCARD_ATTRIBUTE_VALUE = '#'
-	POSSIBLE_ATTRIBUTE_VALUES = [0, 1, WILDCARD_ATTRIBUTE_VALUE]
 	CLASSIFIER_ID = 0
 
 	# xcs_object: the XCS we are using. used to retrieve default values
