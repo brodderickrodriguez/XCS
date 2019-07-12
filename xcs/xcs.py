@@ -2,11 +2,12 @@
 # Auburn University - CSSE
 # June 6 2019
 
+from xcs.classifier import Classifier
+
 import time
 import logging
 import operator
 import numpy as np
-from xcs.classifier import Classifier
 
 
 class XCS:
@@ -162,7 +163,7 @@ class XCS:
 
     def generate_covering_classifier(self, _match_set, sigma):
         # initialize new classifier
-        cl = Classifier(xcs_object=self)
+        cl = Classifier(config=self.config, state_length=self.env.state_length)
 
         # for each attribute in cl's condition
         for i in range(self.env.state_length):
@@ -428,11 +429,11 @@ class XCS:
             # if subsumption is true
             if self.config.do_ga_subsumption:
                 # check if parent1 subsumes child
-                if self.does_subsume(parent1, child):
+                if parent1.does_subsume(child):
                     # if it does, increment parent1 numerosity
                     parent1.numerosity += 1
                 # check if parent2 subsumes child
-                elif self.does_subsume(parent2, child):
+                elif parent2.does_subsume(child):
                     # if it does, increment parent2 numerosity
                     parent2.numerosity += 1
                 else:
@@ -520,55 +521,6 @@ class XCS:
             # assign the action of this child to that random action
             child.action = other_possible_actions[rand_idx]
 
-    def does_subsume(self, cl_sub, cl_tos):
-        # if cl_sub and cl_tos have the same action
-        if cl_sub.action == cl_tos.action:
-            # if cl_sub is allowed to subsume another classifier
-            if self.could_subsume(cl_sub):
-                # is cl_sub is more general than cl_tos
-                # if self.is_more_general(cl_sub, cl_tos):
-                # 	# then cl_sub does subsume cl_tos
-                return True
-
-        # otherwise, cl_sub does not subsume cl_tos
-        return False
-
-    def is_more_general(self, cl_gen, cl_spec):
-        # count the number of wildcards in cl_gen
-        cl_gen_wildcard_count = cl_gen.count_wildcards()
-
-        # count the number of wildcards in cl_spec
-        cl_spec_wildcard_count = cl_spec.count_wildcards()
-
-        # if cl_gen is not more general than cl_spec
-        if cl_gen_wildcard_count <= cl_spec_wildcard_count:
-            return False
-
-        # for each attribute index i in the classifiers condition
-        for i in range(self.config.condition_length):
-            # if the condition for cl_gen is not the wildcard
-            # and cl_gen condition[i] does not match cl_spec condition[i]
-            if cl_gen.condition[i] != Classifier.WILDCARD_ATTRIBUTE_VALUE and \
-                    cl_gen.condition[i] != cl_spec.condition[i]:
-                # then cl_gen is not more general than cl_spec
-                return False
-
-        # otherwise, cl_gen is more general than cl_spec
-        return True
-
-    def could_subsume(self, classifier):
-        # if the classifier's experience is greater than
-        # the subsumption threshold
-        if classifier.experience > self.config.theta_sub:
-            # and if the classifier's error (epsilon) is less than
-            # the error threshold
-            if classifier.epsilon < self.config.epsilon_0:
-                # return true i.e. this classifier can subsume another
-                return True
-
-        # otherwise, this classifier cannot subsume another
-        return False
-
     def do_action_set_subsumption_procedure(self, set_):
         # initialize an empty classifier
         cl = None
@@ -580,7 +532,7 @@ class XCS:
         # for each classifier in the set_
         for c in set_:
             # if c is able to subsume other classifiers
-            if self.could_subsume(c):
+            if c.could_subsume():
                 # if cl is empty or the number of wildcards in c is greater
                 # than the number of wildcards in cl or the number of
                 # wildcards in c equals the number of wildcards in cl and
@@ -598,7 +550,7 @@ class XCS:
             # for each classifier in the set_
             for c in set_:
                 # if cl is more general than c, then subsume it
-                if self.is_more_general(cl, c):
+                if cl.is_more_general(c):
                     # increment cl's numerosity
                     cl.numerosity += c.numerosity
 
@@ -634,7 +586,7 @@ class XCS:
         # for each classifier currently in the population
         for cl in self.population:
             # sum the deletion vote of all the classifiers
-            vote_sum += self.deletion_vote(cl, avg_fitness_in_population)
+            vote_sum += cl.deletion_vote(avg_fitness_in_population)
 
         # select a random threshold for vote_sum
         choice_point = np.random.uniform() * vote_sum
@@ -645,7 +597,7 @@ class XCS:
         # for each classifier currently in the population
         for cl in self.population:
             # sum the deletion vote of all the classifiers
-            vote_sum += self.deletion_vote(cl, avg_fitness_in_population)
+            vote_sum += cl.deletion_vote(avg_fitness_in_population)
 
             # if the current vote_sum is larger than our random threshold
             if vote_sum > choice_point:
@@ -658,24 +610,6 @@ class XCS:
                     self.population.remove(cl)
 
                 return
-
-    def deletion_vote(self, classifier, avg_fitness_in_population):
-        # compute the vote-value for this classifier
-        vote = classifier.action_set_size * classifier.numerosity
-
-        # compute the weighted fitness of this classifier
-        # accounting for the classifier's numerosity
-        fitness_per_numerosity = classifier.fitness / classifier.numerosity
-
-        # if this classifier's experience > the deletion threshold
-        # and fitness_per_numerosity < the fraction
-        # of the mean fitness in population * the average fitness
-        if classifier.experience > self.config.theta_del and \
-                fitness_per_numerosity < (self.config.delta * avg_fitness_in_population):
-            # set the vote to vote * average fitness / fitness_per_numerosity
-            vote = (vote * avg_fitness_in_population) / fitness_per_numerosity
-
-        return vote
 
     def insert_in_population(self, classifier):
         # for each classifier currently in the population
