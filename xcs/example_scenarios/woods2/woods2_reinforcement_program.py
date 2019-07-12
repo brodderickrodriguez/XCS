@@ -40,7 +40,7 @@ class Woods2ReinforcementProgram(ReinforcementProgram):
             self.end_of_program = True
             return 1000
 
-        return -1
+        return -0.1
 
     def termination_criteria_met(self):
         return self.time_step >= self.max_steps or self.end_of_program
